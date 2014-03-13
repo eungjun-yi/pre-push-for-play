@@ -1,0 +1,1 @@
+Copy pre-push into .git/hooks and give execute permission.
