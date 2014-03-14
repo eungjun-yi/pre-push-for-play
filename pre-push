@@ -61,6 +61,21 @@ do
             break
         fi
 
+		if [ "$remote_sha" = $z40 ]
+		then
+			range="master..$local_sha" # NOT accurate. But I don't know a better way.
+		else
+			range="$remote_sha..$local_sha"
+		fi
+
+        git diff --check $range
+        if [ $? -ne 0 ]
+        then
+            echo "pre-push: Whitespace error detected on $local_ref, not pushing"
+            exit_status=1
+            break
+        fi
+
         play test
         if [ $? -ne 0 ]
         then
