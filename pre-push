@@ -26,10 +26,16 @@ z40=0000000000000000000000000000000000000000
 
 IFS=' '
 
-original_branch=`git rev-parse --abbrev-ref HEAD`
 exit_status=0
 
-BASEDIR=$(dirname $0)
+BASEDIR=$(realpath $(dirname $0))
+
+which realpath
+if [ $? -ne 0 ]
+then
+    echo "pre-push: 'realpath' is not found, not pushing"
+    exit 1
+fi
 
 while read local_ref local_sha remote_ref remote_sha
 do
@@ -38,6 +44,12 @@ do
         # Handle delete
         :
     else
+        path_to_root=`realpath $BASEDIR/../..`
+        name=`basename $path_to_root`
+        path_to_build=/tmp/$name-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+        git clone $path_to_root $path_to_build
+        cd $path_to_build
+
         git checkout $local_ref
         if [ $? -ne 0 ]
         then
@@ -48,7 +60,7 @@ do
 
 		if [ "$remote_sha" = $z40 ]
 		then
-			range="master..$local_sha" # NOT accurate. But I don't know a better way.
+			range="origin/master..$local_sha" # NOT accurate. But I don't know a better way.
 		else
 			range="$remote_sha..$local_sha"
 		fi
@@ -63,7 +75,7 @@ do
 
 		if [ "$remote_sha" = $z40 ]
 		then
-			range="master..$local_sha" # NOT accurate. But I don't know a better way.
+			range="origin/master..$local_sha" # NOT accurate. But I don't know a better way.
 		else
 			range="$remote_sha..$local_sha"
 		fi
@@ -85,7 +97,5 @@ do
         fi
     fi
 done
-
-git checkout $original_branch
 
 exit $exit_status
